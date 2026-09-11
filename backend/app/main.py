@@ -1,19 +1,41 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_router
 from app.core.config import get_settings
-from app.core.logging import configure_logging, get_logger # type: ignore
+from app.core.logging import configure_logging, get_logger
 
 configure_logging()
 logger = get_logger(__name__)
 
 settings = get_settings()
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup and shutdown logic for the app.
+
+    Code before `yield` runs on startup.
+    Code after `yield` runs on shutdown.
+    """
+    logger.info(
+        "Starting %s v%s (env=%s)",
+        settings.app_name,
+        settings.app_version,
+        settings.environment,
+    )
+    logger.info("CORS allowed origins: %s", settings.cors_origins)
+    yield
+    logger.info("Shutting down %s", settings.app_name)
+
+
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
     debug=settings.debug,
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -23,17 +45,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.on_event("startup")
-async def on_startup() -> None:
-    logger.info(
-        "Starting %s v%s (env=%s)",
-        settings.app_name,
-        settings.app_version,
-        settings.environment,
-    )
-    logger.info("CORS allowed origins: %s", settings.cors_origins)
 
 
 @app.get("/", tags=["root"])
