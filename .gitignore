@@ -31,3 +31,5 @@ ml/datasets/*.csv
 # Logs
 *.log
 logs/
+# Network captures
+network-monitor/captures/
