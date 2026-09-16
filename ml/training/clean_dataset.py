@@ -1,12 +1,12 @@
 """Clean CICIDS2017 and save as a single Parquet file.
 
 Pipeline:
-  1. Read all 8 CSVs (latin-1 encoding to fix mojibake labels).
+  1. Read all 8 CSVs (latin-1 encoding).
   2. Strip whitespace from column names.
   3. Replace inf / -inf with NaN.
   4. Drop rows with NaN.
   5. Drop exact duplicate rows.
-  6. Map original labels -> grouped labels.
+  6. Map original labels -> grouped labels via normalize_label().
   7. Save as Parquet.
 
 Usage:
@@ -23,31 +23,55 @@ import pandas as pd
 RAW_DIR = Path(__file__).resolve().parent.parent / "datasets" / "cicids2017"
 OUT_FILE = Path(__file__).resolve().parent.parent / "datasets" / "cicids2017_clean.parquet"
 
-# Mapping from original CICIDS2017 labels to grouped labels.
-# Note: the original CSVs contain a non-ASCII dash in "Web Attack - X".
-# After reading with latin-1 the character comes through as "\x96",
-# so the keys below use that exact byte.
-LABEL_MAP = {
-    "BENIGN": "BENIGN",
-    "DoS Hulk": "DoS",
-    "DoS GoldenEye": "DoS",
-    "DoS slowloris": "DoS",
-    "DoS Slowhttptest": "DoS",
-    "DDoS": "DDoS",
-    "PortScan": "PortScan",
-    "FTP-Patator": "BruteForce",
-    "SSH-Patator": "BruteForce",
-    "Web Attack \x96 Brute Force": "BruteForce",
-    "Web Attack \x96 XSS": "WebAttack",
-    "Web Attack \x96 Sql Injection": "WebAttack",
-    "Bot": "Bot",
-    "Infiltration": "Infiltration",
-    "Heartbleed": "Heartbleed",
-}
+# Canonical grouped labels, in fixed order (useful for reports and confusion matrices).
+GROUP_ORDER = [
+    "BENIGN",
+    "DoS",
+    "DDoS",
+    "PortScan",
+    "BruteForce",
+    "WebAttack",
+    "Bot",
+    "Infiltration",
+    "Heartbleed",
+]
+
+
+def normalize_label(label: str) -> str:
+    """Map an original CICIDS2017 label to a grouped label.
+
+    Uses substring matching so it is robust to encoding differences in the
+    Web Attack labels (the original CSVs contain a non-ASCII dash that
+    decodes differently depending on encoding).
+    """
+    label = label.strip()
+
+    # Web attacks: "Web Attack <dash> XSS", "... Sql Injection", "... Brute Force".
+    # Match by substring so the dash encoding doesn't matter.
+    if label.startswith("Web Attack"):
+        if "Brute Force" in label:
+            return "BruteForce"
+        if "XSS" in label or "Sql Injection" in label:
+            return "WebAttack"
+        return "WebAttack"  # fallback for any other Web Attack variant
+
+    # DoS family.
+    if label in {"DoS Hulk", "DoS GoldenEye", "DoS slowloris", "DoS Slowhttptest"}:
+        return "DoS"
+
+    # Brute force family.
+    if label in {"FTP-Patator", "SSH-Patator"}:
+        return "BruteForce"
+
+    # Already-canonical labels.
+    if label in {"BENIGN", "DDoS", "PortScan", "Bot", "Infiltration", "Heartbleed"}:
+        return label
+
+    return "UNKNOWN"
 
 
 def load_one(path: Path) -> pd.DataFrame:
-    """Read a single CSV with the correct encoding and cleaned columns."""
+    """Read a single CSV with cleaned column names."""
     df = pd.read_csv(path, encoding="latin-1", low_memory=False)
     df.columns = df.columns.str.strip()
     return df
@@ -83,25 +107,30 @@ def main() -> None:
     df = df.drop_duplicates().reset_index(drop=True)
     print(f"Dropped {before - len(df):,} duplicate rows -> {len(df):,} rows")
 
+    # Show original labels BEFORE mapping (so we can see what's really there).
+    print("\nOriginal label counts (before grouping):")
+    orig_counts = df["Label"].astype(str).str.strip().value_counts()
+    for label, count in orig_counts.items():
+        print(f"  {label!r:50s} {count:>10,}")
+
     # Map labels -> grouped labels.
-    df["Label"] = df["Label"].astype(str).str.strip()
-    unmapped = set(df["Label"].unique()) - set(LABEL_MAP.keys())
-    if unmapped:
-        print(f"\nWARNING: {len(unmapped)} unmapped label(s):")
-        for label in sorted(unmapped):
-            print(f"  {label!r}")
-        print("Rows with these labels will be dropped.")
-        df = df[df["Label"].isin(LABEL_MAP.keys())].reset_index(drop=True)
+    df["Label"] = df["Label"].astype(str).str.strip().map(normalize_label)
 
-    df["Label"] = df["Label"].map(LABEL_MAP)
-    print(f"After label mapping: {len(df):,} rows")
+    unknown_count = int((df["Label"] == "UNKNOWN").sum())
+    if unknown_count:
+        print(f"\nWARNING: {unknown_count:,} rows with UNKNOWN label will be dropped.")
+        df = df[df["Label"] != "UNKNOWN"].reset_index(drop=True)
 
-    # Summary.
+    print(f"\nAfter label grouping: {len(df):,} rows")
+
+    # Summary (ordered).
     print("\nFinal label distribution:")
     counts = df["Label"].value_counts()
-    for label, count in counts.items():
-        pct = 100 * count / len(df)
-        print(f"  {label:<15s} {count:>10,}  ({pct:5.2f}%)")
+    for label in GROUP_ORDER:
+        if label in counts:
+            count = counts[label]
+            pct = 100 * count / len(df)
+            print(f"  {label:<15s} {count:>10,}  ({pct:5.2f}%)")
 
     # Save.
     OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
