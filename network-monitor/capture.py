@@ -12,14 +12,7 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 
-from scapy.all import (  # type: ignore[attr-defined]
-    ICMP,
-    IP,
-    TCP,
-    UDP,
-    sniff,
-    wrpcap,
-)
+from scapy.all import ICMP, IP, TCP, UDP, sniff, wrpcap  # type: ignore[attr-defined]
 
 # --- Configuration ---
 INTERFACE = r"\Device\NPF_Loopback"
