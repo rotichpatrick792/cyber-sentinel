@@ -35,3 +35,5 @@ logs/
 network-monitor/captures/
 # CICIDS2017 dataset (large files, never commit)
 ml/datasets/cicids2017/
+# Cleaned dataset
+ml/datasets/*.parquet
