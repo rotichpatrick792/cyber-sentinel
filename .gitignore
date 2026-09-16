@@ -37,3 +37,6 @@ network-monitor/captures/
 ml/datasets/cicids2017/
 # Cleaned dataset
 ml/datasets/*.parquet
+# Trained models
+ml/models/*.joblib
+ml/models/*.pkl
