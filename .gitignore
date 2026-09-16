@@ -33,3 +33,5 @@ ml/datasets/*.csv
 logs/
 # Network captures
 network-monitor/captures/
+# CICIDS2017 dataset (large files, never commit)
+ml/datasets/cicids2017/
