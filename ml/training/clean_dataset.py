@@ -43,23 +43,23 @@ def normalize_label(label: str) -> str:
     Uses substring matching so it is robust to encoding differences in the
     Web Attack labels (the original CSVs contain a non-ASCII dash that
     decodes differently depending on encoding).
+
+    All Web Attack variants (Brute Force, XSS, Sql Injection) are grouped
+    under "WebAttack". This differs from the first grouping, which placed
+    Web Brute Force under BruteForce and left WebAttack with too few
+    samples to learn from.
     """
     label = label.strip()
 
-    # Web attacks: "Web Attack <dash> XSS", "... Sql Injection", "... Brute Force".
-    # Match by substring so the dash encoding doesn't matter.
+    # All Web Attack variants -> WebAttack.
     if label.startswith("Web Attack"):
-        if "Brute Force" in label:
-            return "BruteForce"
-        if "XSS" in label or "Sql Injection" in label:
-            return "WebAttack"
-        return "WebAttack"  # fallback for any other Web Attack variant
+        return "WebAttack"
 
     # DoS family.
     if label in {"DoS Hulk", "DoS GoldenEye", "DoS slowloris", "DoS Slowhttptest"}:
         return "DoS"
 
-    # Brute force family.
+    # Brute force family (network-level only).
     if label in {"FTP-Patator", "SSH-Patator"}:
         return "BruteForce"
 
