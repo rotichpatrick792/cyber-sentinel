@@ -7,6 +7,7 @@ from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging, get_logger
 from app.services.predictor import is_loaded, load_error, load_model
+from app.models.schemas import HealthResponse
 
 configure_logging()
 logger = get_logger(__name__)
@@ -55,14 +56,13 @@ async def root() -> dict:
     return {"message": "CyberSentinel is alive"}
 
 
-@app.get("/health", tags=["health"])
-async def health() -> dict:
-    return {
-        "status": "healthy",
-        "environment": settings.environment,
-        "model_loaded": is_loaded(),
-        "model_error": load_error(),
-    }
-
+@app.get("/health", tags=["health"], response_model=HealthResponse)
+async def health() -> HealthResponse:
+    return HealthResponse(
+        status="healthy",
+        environment=settings.environment,
+        model_loaded=is_loaded(),
+        model_error=load_error(),
+    )
 
 app.include_router(api_router, prefix=settings.api_v1_prefix)

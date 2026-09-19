@@ -1,30 +1,11 @@
 """POST /api/v1/predict — run the ML model on a single flow."""
 
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, Field
 
+from app.models.schemas import PredictRequest, PredictResponse
 from app.services import predictor
 
 router = APIRouter(tags=["predict"])
-
-
-class PredictRequest(BaseModel):
-    """A single network flow, keyed by feature name.
-
-    The set of expected features is defined by the trained model. Any
-    feature the model was not trained on is ignored.
-    """
-
-    features: dict[str, float] = Field(
-        ...,
-        description="Feature name -> value. Must contain every feature the model expects.",
-    )
-
-
-class PredictResponse(BaseModel):
-    label: str
-    confidence: float
-    probabilities: dict[str, float]
 
 
 @router.post(
