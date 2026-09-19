@@ -23,6 +23,10 @@ class Settings(BaseSettings):
 
     # --- CORS (used later by the React frontend) ---
     cors_origins: list[str] = ["http://localhost:5173"]
+        # --- ML model ---
+    # Path to the joblib bundle. Relative paths are resolved from the
+    # process working directory (backend/ when running uvicorn).
+    model_path: str = "../ml/models/random_forest_v2_top40.joblib"
 
     # Pydantic v2 config: read from .env, ignore unknown keys.
     model_config = SettingsConfigDict(

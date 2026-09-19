@@ -1,12 +1,15 @@
 from fastapi import APIRouter
 
-# Top-level router for API version 1.
-# Feature-specific routers (health, predict, alerts, ...) will be
-# included here as the project grows.
+from app.api.v1 import predict
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
+
 api_router = APIRouter(tags=["v1"])
+api_router.include_router(predict.router)
 
 
 @api_router.get("/ping", summary="Ping the v1 API")
 async def ping() -> dict:
-    """Simple liveness check for the versioned API."""
+    logger.debug("Ping endpoint called")
     return {"api": "v1", "message": "pong"}

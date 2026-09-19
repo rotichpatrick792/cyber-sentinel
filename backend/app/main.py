@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging, get_logger
+from app.services.predictor import is_loaded, load_error, load_model
 
 configure_logging()
 logger = get_logger(__name__)
@@ -27,6 +28,7 @@ async def lifespan(app: FastAPI):
         settings.environment,
     )
     logger.info("CORS allowed origins: %s", settings.cors_origins)
+    load_model(settings.model_path)
     yield
     logger.info("Shutting down %s", settings.app_name)
 
@@ -55,7 +57,12 @@ async def root() -> dict:
 
 @app.get("/health", tags=["health"])
 async def health() -> dict:
-    return {"status": "healthy", "environment": settings.environment}
+    return {
+        "status": "healthy",
+        "environment": settings.environment,
+        "model_loaded": is_loaded(),
+        "model_error": load_error(),
+    }
 
 
 app.include_router(api_router, prefix=settings.api_v1_prefix)
