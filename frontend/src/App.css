@@ -29,38 +29,141 @@ header h1 {
 }
 
 main {
-  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.panel {
+  padding: 1.5rem;
   background: #111827;
   border: 1px solid #1f2937;
   border-radius: 8px;
 }
 
-h2 {
-  margin-top: 0;
+.panel h2 {
+  margin: 0 0 0.75rem;
   font-size: 1.1rem;
   color: #cbd5e1;
 }
 
-ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.hint {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin: 0 0 0.75rem;
 }
 
-li {
-  padding: 0.4rem 0;
-  border-bottom: 1px solid #1f2937;
+.hint code {
+  background: #1f2937;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
 }
 
-li:last-child {
-  border-bottom: none;
+textarea {
+  width: 100%;
+  font-family: ui-monospace, "Cascadia Code", "Consolas", monospace;
+  font-size: 0.85rem;
+  padding: 0.75rem;
+  background: #0b1120;
+  border: 1px solid #1f2937;
+  border-radius: 6px;
+  color: #e5e7eb;
+  resize: vertical;
+}
+
+textarea:focus {
+  outline: 2px solid #38bdf8;
+  outline-offset: 1px;
+}
+
+.actions {
+  margin-top: 0.75rem;
+}
+
+button {
+  background: #38bdf8;
+  color: #0b1120;
+  border: none;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: #7dd3fc;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .ok {
   color: #4ade80;
 }
 
-.bad,
 .error {
   color: #f87171;
+  margin: 0.5rem 0 0;
+}
+
+.result {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #0b1120;
+  border: 1px solid #1f2937;
+  border-radius: 6px;
+}
+
+.label-big {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.confidence {
+  margin: 0.25rem 0 1rem;
+  color: #94a3b8;
+}
+
+.probs {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.probs li {
+  display: grid;
+  grid-template-columns: 110px 1fr 60px;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.prob-name {
+  color: #94a3b8;
+}
+
+.prob-bar {
+  height: 8px;
+  background: #1f2937;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.prob-fill {
+  display: block;
+  height: 100%;
+  background: #38bdf8;
+}
+
+.prob-value {
+  text-align: right;
+  color: #cbd5e1;
 }
