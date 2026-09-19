@@ -34,3 +34,6 @@ Total features: 78
 - **90%** of importance: 40 features
 - **95%** of importance: 48 features
 - **99%** of importance: 57 features
+## Experiment: top-40 model
+
+A model trained on the top 40 features achieves macro F1 = 0.9317 vs 0.9320 for the full 78-feature model. This confirms the remaining features carry negligible signal. The reduced model is adopted for deployment.
