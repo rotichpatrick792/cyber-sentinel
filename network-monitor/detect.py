@@ -2,6 +2,8 @@
 
 Sniffs packets, groups them into flows, and sends each completed flow to
 the CyberSentinel prediction API. Prints alerts for non-BENIGN flows.
+Also posts each classified flow to the backend so the dashboard can
+display a live feed.
 
 Prerequisites:
     - The FastAPI backend must be running on http://127.0.0.1:8000
@@ -27,6 +29,7 @@ INTERFACE = r"\Device\NPF_Loopback"
 BPF_FILTER = "ip and host 127.0.0.1"
 IDLE_TIMEOUT_S = 3.0
 API_URL = "http://127.0.0.1:8000/api/v1/predict"
+FLOWS_URL = "http://127.0.0.1:8000/api/v1/flows"
 
 
 def classify(features: dict[str, float]) -> dict | None:
@@ -45,6 +48,27 @@ def classify(features: dict[str, float]) -> dict | None:
     return None
 
 
+def post_flow(flow: Flow, result: dict) -> None:
+    """Send a classified flow to the backend for the live dashboard."""
+    body = {
+        "src_ip": flow.key.src_ip,
+        "src_port": flow.key.src_port,
+        "dst_ip": flow.key.dst_ip,
+        "dst_port": flow.key.dst_port,
+        "protocol": flow.key.protocol,
+        "label": result["label"],
+        "confidence": result["confidence"],
+    }
+    data = json.dumps(body).encode("utf-8")
+    req = Request(FLOWS_URL, data=data, headers={"Content-Type": "application/json"})
+    try:
+        with urlopen(req, timeout=3) as resp:
+            resp.read()
+    except Exception as e:
+        # Don't spam the terminal if the backend isn't reachable.
+        print(f"  [post error] {type(e).__name__}: {e}")
+
+
 def report_flow(flow: Flow) -> None:
     """Classify a completed flow and print the verdict."""
     k = flow.key
@@ -60,6 +84,9 @@ def report_flow(flow: Flow) -> None:
 
     label = result["label"]
     confidence = result["confidence"]
+
+    # Send to the backend so the dashboard can display it.
+    post_flow(flow, result)
 
     if label == "BENIGN":
         print(f"[.] {src} -> {dst}  BENIGN  ({confidence:.2f})")
@@ -96,6 +123,7 @@ def main() -> None:
     print(f"CyberSentinel live detection on {INTERFACE}")
     print(f"Filter: {BPF_FILTER}")
     print(f"API:    {API_URL}")
+    print(f"Feed:   {FLOWS_URL}")
     print("Press Ctrl+C to stop.\n")
 
     try:

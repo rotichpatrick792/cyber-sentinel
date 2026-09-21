@@ -1,4 +1,4 @@
-import type { Health, PredictResponse } from './types';
+import type { FlowsRecentResponse, Health, PredictResponse } from './types';
 
 const API_BASE = 'http://127.0.0.1:8000';
 
@@ -23,4 +23,8 @@ export function predict(features: Record<string, number>): Promise<PredictRespon
         method: 'POST',
         body: JSON.stringify({ features }),
     });
+}
+
+export function fetchRecentFlows(limit = 50): Promise<FlowsRecentResponse> {
+    return request<FlowsRecentResponse>(`/api/v1/flows/recent?limit=${limit}`);
 }

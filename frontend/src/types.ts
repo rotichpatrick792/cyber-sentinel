@@ -10,3 +10,18 @@ export type PredictResponse = {
     confidence: number;
     probabilities: Record<string, number>;
 };
+export type FlowRecord = {
+    src_ip: string;
+    src_port: number;
+    dst_ip: string;
+    dst_port: number;
+    protocol: number;
+    label: string;
+    confidence: number;
+    timestamp: string | null;
+};
+
+export type FlowsRecentResponse = {
+    flows: FlowRecord[];
+    total: number;
+};

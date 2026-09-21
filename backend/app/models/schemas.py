@@ -33,3 +33,20 @@ class HealthResponse(BaseModel):
     environment: str
     model_loaded: bool
     model_error: str | None = None
+
+class FlowRecord(BaseModel):
+    """A classified flow as seen by the monitor."""
+
+    src_ip: str
+    src_port: int
+    dst_ip: str
+    dst_port: int
+    protocol: int
+    label: str
+    confidence: float
+    timestamp: str | None = None
+
+
+class FlowsRecentResponse(BaseModel):
+    flows: list[FlowRecord]
+    total: int
