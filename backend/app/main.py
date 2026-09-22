@@ -8,6 +8,9 @@ from app.core.config import get_settings
 from app.core.logging import configure_logging, get_logger
 from app.services.predictor import is_loaded, load_error, load_model
 from app.models.schemas import HealthResponse
+from sqlalchemy import text
+
+from app.core.database import engine
 
 configure_logging()
 logger = get_logger(__name__)
@@ -17,11 +20,6 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Startup and shutdown logic for the app.
-
-    Code before `yield` runs on startup.
-    Code after `yield` runs on shutdown.
-    """
     logger.info(
         "Starting %s v%s (env=%s)",
         settings.app_name,
@@ -30,9 +28,16 @@ async def lifespan(app: FastAPI):
     )
     logger.info("CORS allowed origins: %s", settings.cors_origins)
     load_model(settings.model_path)
+
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        logger.info("Database connection OK")
+    except Exception as exc:
+        logger.error("Database connection failed: %s", exc)
+
     yield
     logger.info("Shutting down %s", settings.app_name)
-
 
 app = FastAPI(
     title=settings.app_name,

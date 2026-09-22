@@ -28,6 +28,13 @@ class Settings(BaseSettings):
     # process working directory (backend/ when running uvicorn).
     model_path: str = "../ml/models/random_forest_v2_top40.joblib"
 
+        # --- Database ---
+    database_url: str = "postgresql+psycopg://postgres:Kiprop%4003@localhost:5432/cybersentinel"
+    db_echo: bool = False
+
+    # --- Database ---
+    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/cybersentinel"
+    db_echo: bool = False
     # Pydantic v2 config: read from .env, ignore unknown keys.
     model_config = SettingsConfigDict(
         env_file=".env",
