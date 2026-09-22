@@ -41,6 +41,10 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+        # --- Auth ---
+    secret_key: str = "CHANGE_ME_IN_ENV"
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 60
 
 
 @lru_cache
