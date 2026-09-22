@@ -11,7 +11,11 @@ from app.models.schemas import HealthResponse
 from sqlalchemy import text
 
 from app.core.database import engine
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
+from app.core.rate_limit import limiter
 configure_logging()
 logger = get_logger(__name__)
 
@@ -45,6 +49,9 @@ app = FastAPI(
     debug=settings.debug,
     lifespan=lifespan,
 )
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
+app.add_middleware(SlowAPIMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

@@ -1,11 +1,13 @@
 """POST /api/v1/predict — run the ML model on a single flow.
 
-Requires authentication (Bearer JWT).
+Requires authentication (Bearer JWT) and is rate-limited per client IP.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from starlette.requests import Request
 
 from app.api.deps import get_current_user
+from app.core.rate_limit import limiter
 from app.models.schemas import PredictRequest, PredictResponse
 from app.models.user import User
 from app.services import predictor
@@ -18,8 +20,10 @@ router = APIRouter(tags=["predict"])
     response_model=PredictResponse,
     summary="Classify a single network flow",
 )
+@limiter.limit("30/minute")
 async def predict(
-    request: PredictRequest,
+    request: Request,
+    payload: PredictRequest,
     current_user: User = Depends(get_current_user),
 ) -> PredictResponse:
     if not predictor.is_loaded():
@@ -29,7 +33,7 @@ async def predict(
         )
 
     try:
-        result = predictor.predict(request.features)
+        result = predictor.predict(payload.features)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
