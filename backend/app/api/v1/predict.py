@@ -20,7 +20,7 @@ router = APIRouter(tags=["predict"])
     response_model=PredictResponse,
     summary="Classify a single network flow",
 )
-@limiter.limit("30/minute")
+@limiter.limit("600/minute")
 async def predict(
     request: Request,
     payload: PredictRequest,

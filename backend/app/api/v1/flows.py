@@ -20,7 +20,7 @@ router = APIRouter(tags=["flows"])
 
 
 @router.post("/flows", response_model=FlowRecord, status_code=201)
-@limiter.limit("200/minute")
+@limiter.limit("1200/minute")
 async def record_flow(
     request: Request,
     flow: FlowRecord,
