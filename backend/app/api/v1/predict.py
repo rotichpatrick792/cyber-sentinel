@@ -1,8 +1,13 @@
-"""POST /api/v1/predict — run the ML model on a single flow."""
+"""POST /api/v1/predict — run the ML model on a single flow.
 
-from fastapi import APIRouter, HTTPException, status
+Requires authentication (Bearer JWT).
+"""
 
+from fastapi import APIRouter, Depends, HTTPException, status
+
+from app.api.deps import get_current_user
 from app.models.schemas import PredictRequest, PredictResponse
+from app.models.user import User
 from app.services import predictor
 
 router = APIRouter(tags=["predict"])
@@ -13,7 +18,10 @@ router = APIRouter(tags=["predict"])
     response_model=PredictResponse,
     summary="Classify a single network flow",
 )
-async def predict(request: PredictRequest) -> PredictResponse:
+async def predict(
+    request: PredictRequest,
+    current_user: User = Depends(get_current_user),
+) -> PredictResponse:
     if not predictor.is_loaded():
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
