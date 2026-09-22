@@ -1,13 +1,27 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fetchHealth, fetchRecentFlows, predict } from './api';
+import { clearToken, getToken } from './auth';
+import Login from './Login';
 import type { FlowRecord, Health, PredictResponse } from './types';
 
 const POLL_MS = 2000;
 
 function App() {
+  const [token, setTokenState] = useState<string | null>(() => getToken());
+
+  if (!token) {
+    return <Login onSuccess={() => setTokenState(getToken())} />;
+  }
+
+  return <Dashboard onLogout={() => {
+    clearToken();
+    setTokenState(null);
+  }} />;
+}
+
+function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [health, setHealth] = useState<Health | null>(null);
   const [healthError, setHealthError] = useState<string | null>(null);
-
   const [flows, setFlows] = useState<FlowRecord[]>([]);
 
   const [featuresText, setFeaturesText] = useState('');
@@ -15,14 +29,12 @@ function App() {
   const [predictError, setPredictError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Health check once on mount.
   useEffect(() => {
     fetchHealth()
       .then(setHealth)
       .catch((e) => setHealthError(String(e)));
   }, []);
 
-  // Poll recent flows every 2s.
   useEffect(() => {
     let cancelled = false;
     async function tick() {
@@ -30,7 +42,7 @@ function App() {
         const data = await fetchRecentFlows(200);
         if (!cancelled) setFlows(data.flows);
       } catch {
-        /* backend might be restarting */
+        /* ignore */
       }
     }
     tick();
@@ -41,11 +53,7 @@ function App() {
     };
   }, []);
 
-  const alerts = useMemo(
-    () => flows.filter((f) => f.label !== 'BENIGN'),
-    [flows],
-  );
-
+  const alerts = useMemo(() => flows.filter((f) => f.label !== 'BENIGN'), [flows]);
   const benignCount = flows.length - alerts.length;
 
   async function handlePredict() {
@@ -64,11 +72,7 @@ function App() {
     }
   }
 
-  const modelStatus = health?.model_loaded
-    ? 'online'
-    : healthError
-      ? 'down'
-      : '…';
+  const modelStatus = health?.model_loaded ? 'online' : healthError ? 'down' : '…';
 
   return (
     <div className="app">
@@ -77,8 +81,13 @@ function App() {
           <h1>CyberSentinel</h1>
           <p className="subtitle">AI-powered network threat detection</p>
         </div>
-        <div className={`status-pill ${modelStatus}`}>
-          <span className="dot" /> model {modelStatus}
+        <div className="topbar-right">
+          <div className={`status-pill ${modelStatus}`}>
+            <span className="dot" /> model {modelStatus}
+          </div>
+          <button className="logout-btn" onClick={onLogout}>
+            Log out
+          </button>
         </div>
       </header>
 
