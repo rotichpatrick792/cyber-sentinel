@@ -21,30 +21,29 @@ class Settings(BaseSettings):
     # --- API ---
     api_v1_prefix: str = "/api/v1"
 
-    # --- CORS (used later by the React frontend) ---
-    cors_origins: list[str] = ["http://localhost:5173"]
-        # --- ML model ---
-    # Path to the joblib bundle. Relative paths are resolved from the
-    # process working directory (backend/ when running uvicorn).
-    model_path: str = "../ml/models/random_forest_v2_top40.joblib"
+    # --- CORS ---
+    # Comma-separated list of allowed origins.
+    # Example: "http://localhost:5173,https://example.com"
+    cors_origins: str = "http://localhost:5173"
 
-        # --- Database ---
-    database_url: str = "postgresql+psycopg://postgres:Kiprop%4003@localhost:5432/cybersentinel"
-    db_echo: bool = False
+    # --- ML model ---
+    model_path: str = "../ml/models/random_forest_v2_top40.joblib"
 
     # --- Database ---
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/cybersentinel"
     db_echo: bool = False
+
+    # --- Auth ---
+    secret_key: str = "CHANGE_ME_IN_ENV"
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 60
+
     # Pydantic v2 config: read from .env, ignore unknown keys.
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
     )
-        # --- Auth ---
-    secret_key: str = "CHANGE_ME_IN_ENV"
-    algorithm: str = "HS256"
-    access_token_expire_minutes: int = 60
 
 
 @lru_cache
