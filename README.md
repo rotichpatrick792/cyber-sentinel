@@ -54,10 +54,12 @@ Trained on the **CICIDS2017** dataset (~2.5M flows after cleaning) with a Random
 
 ```mermaid
 flowchart LR
-    NIC[Network Interface] --> SCAPY[Scapy capture]
-    SCAPY --> FLOW[Flow tracker<br/>40 features]
+    NIC[Network Interface] --> CAP[Scapy capture]
+    CAP --> FLOW[Flow tracker<br/>40 features]
     FLOW --> API[FastAPI /predict]
-    API --> MODEL[(Random Forest<br/>.joblib)]
-    API --> STORE[(In-memory<br/>flow buffer)]
-    STORE --> DASH[React Dashboard<br/>live feed + alerts]
-    DB[(PostgreSQL<br/>users)] --- API
+    API --> MODEL[Random Forest model]
+    API --> STORE[In-memory flow buffer]
+    STORE --> DASH[React Dashboard]
+    DASH --> USER[User]
+    API --> DB[PostgreSQL users]
+```
