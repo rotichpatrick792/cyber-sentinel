@@ -1,9 +1,13 @@
 import { useState } from 'react';
-import { login } from './api';
+import { login, register } from './api';
 import { setToken } from './auth';
 
+type Mode = 'login' | 'register';
+
 function Login({ onSuccess }: { onSuccess: () => void }) {
+    const [mode, setMode] = useState<Mode>('login');
     const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -13,6 +17,10 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
         setLoading(true);
         setError(null);
         try {
+            if (mode === 'register') {
+                await register(username, email, password);
+                // Auto-login after successful registration.
+            }
             const token = await login(username, password);
             setToken(token);
             onSuccess();
@@ -23,11 +31,18 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
         }
     }
 
+    function switchMode() {
+        setMode(mode === 'login' ? 'register' : 'login');
+        setError(null);
+    }
+
     return (
         <div className="login-page">
             <form className="login-card" onSubmit={handleSubmit}>
                 <h1>CyberSentinel</h1>
-                <p className="subtitle">Sign in to continue</p>
+                <p className="subtitle">
+                    {mode === 'login' ? 'Sign in to continue' : 'Create an account'}
+                </p>
 
                 <label>
                     <span>Username</span>
@@ -36,9 +51,23 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         autoComplete="username"
+                        minLength={3}
                         required
                     />
                 </label>
+
+                {mode === 'register' && (
+                    <label>
+                        <span>Email</span>
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            autoComplete="email"
+                            required
+                        />
+                    </label>
+                )}
 
                 <label>
                     <span>Password</span>
@@ -46,7 +75,8 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        autoComplete="current-password"
+                        autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                        minLength={8}
                         required
                     />
                 </label>
@@ -54,7 +84,24 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
                 {error && <p className="error">{error}</p>}
 
                 <button type="submit" disabled={loading}>
-                    {loading ? 'Signing in…' : 'Sign in'}
+                    {loading
+                        ? mode === 'login'
+                            ? 'Signing in…'
+                            : 'Creating account…'
+                        : mode === 'login'
+                            ? 'Sign in'
+                            : 'Create account'}
+                </button>
+
+                <button
+                    type="button"
+                    className="link-btn"
+                    onClick={switchMode}
+                    disabled={loading}
+                >
+                    {mode === 'login'
+                        ? "Don't have an account? Register"
+                        : 'Already have an account? Sign in'}
                 </button>
             </form>
         </div>
