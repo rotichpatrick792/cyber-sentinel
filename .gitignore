@@ -40,3 +40,4 @@ ml/datasets/*.parquet
 # Trained models
 ml/models/*.joblib
 ml/models/*.pkl
+.env.docker
